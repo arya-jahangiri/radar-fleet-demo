@@ -1,0 +1,19 @@
+aws_region        = "eu-west-2"
+project_prefix    = "imperial-radar-demo"
+hosted_home_count = 1
+nodes_per_home    = 5
+
+# Keep these short while experimenting.
+s3_cold_copy_enabled    = false
+s3_retention_days        = 1
+latest_state_ttl_seconds = 86400
+dashboard_snapshot_max_items = 10000
+dashboard_cors_allow_origin  = "*"
+
+# Set false via scripts/aws_demo_pause.sh to stop ingestion without destroy.
+iot_rule_enabled = true
+
+# Set true only for an AWS-side load-generator smoke test.
+cloud_simulator_enabled        = false
+cloud_simulator_home_count     = 100
+cloud_simulator_period_seconds = 60

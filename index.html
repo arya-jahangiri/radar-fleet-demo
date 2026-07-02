@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Radar Fleet Console</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css?v=20260702-triage" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 44 44" width="42" height="42">
+              <circle class="rm-ring" cx="22" cy="22" r="17" />
+              <circle class="rm-ring" cx="22" cy="22" r="11" />
+              <circle class="rm-dot" cx="22" cy="22" r="2.4" fill="var(--accent)" />
+            </svg>
+          </span>
+          <div>
+            <h1 class="brand-title">Radar Fleet Console</h1>
+            <p class="brand-sub">Fleet status and ingest monitoring</p>
+          </div>
+        </div>
+        <div class="status-pills">
+          <span class="status-pill" id="conn-pill"><i class="dot"></i> connecting…</span>
+          <span class="status-pill clock" id="clock">--:--:--</span>
+        </div>
+      </header>
+
+      <section class="kpi-strip" id="kpi-strip">
+        <div class="kpi"><span class="kpi-label">Homes reporting</span><strong id="kpi-homes">0</strong></div>
+        <div class="kpi"><span class="kpi-label">Walking</span><strong id="kpi-walking" class="t-walk">0</strong></div>
+        <div class="kpi"><span class="kpi-label">Stationary</span><strong id="kpi-stationary" class="t-stat">0</strong></div>
+        <div class="kpi"><span class="kpi-label">Absent</span><strong id="kpi-absent" class="t-absent">0</strong></div>
+        <div class="kpi"><span class="kpi-label">Active alerts</span><strong id="kpi-alerts" class="t-alert">0</strong></div>
+        <div class="kpi"><span class="kpi-label">Gait review</span><strong id="kpi-review" class="t-review">0</strong></div>
+        <div class="kpi"><span class="kpi-label">Nodes reporting</span><strong id="kpi-nodes">0 / 0</strong></div>
+        <div class="kpi"><span class="kpi-label">Ingest rate</span><strong id="kpi-rate">0 <small>msg/s</small></strong></div>
+        <div class="kpi" title="Queue admission to processed, measured in the ingest worker"><span class="kpi-label">Ingest p95</span><strong id="kpi-latency">0 <small>ms</small></strong></div>
+      </section>
+
+      <main class="console-grid">
+        <div class="col-left">
+          <section class="panel fleet-panel">
+            <div class="panel-head">
+              <h2>Fleet <span class="muted" id="fleet-count">- 0 homes</span></h2>
+              <div class="legend">
+                <span><i class="sw sw-walk"></i>walking</span>
+                <span><i class="sw sw-stat"></i>stationary</span>
+                <span><i class="sw sw-absent"></i>absent</span>
+                <span><i class="sw sw-warn"></i>warning</span>
+                <span><i class="sw sw-crit"></i>critical</span>
+                <span><i class="sw sw-review"></i>gait review</span>
+              </div>
+            </div>
+            <p class="panel-hint">Each cell is one home. Select a cell to inspect the latest summary.</p>
+            <div class="fleet-grid" id="fleet-grid"></div>
+          </section>
+
+          <section class="panel review-panel">
+            <div class="panel-head">
+              <h2>Needs review</h2>
+              <span class="muted" id="review-sub">12-week gait decline</span>
+            </div>
+            <ul class="review-list" id="review-list"></ul>
+          </section>
+
+          <section class="panel events-panel">
+            <div class="panel-head"><h2>Recent events</h2><span class="muted" id="events-sub">new alert transitions</span></div>
+            <ul class="events" id="events"></ul>
+          </section>
+        </div>
+
+        <aside class="home-panel" id="home-panel">
+          <div class="panel-head">
+            <h2 id="home-title">Select a home</h2>
+            <span class="status-pill" id="home-state">-</span>
+          </div>
+          <div id="home-empty" class="home-empty">
+            <p>Select a home to view its latest summary.</p>
+          </div>
+
+          <div id="home-body" class="home-body" hidden>
+            <div class="summary-grid">
+              <div class="readout">
+                <h3>Home summary</h3>
+                <dl id="summary-dl"></dl>
+              </div>
+              <div class="readout">
+                <h3>Outputs</h3>
+                <dl id="derived-dl"></dl>
+              </div>
+            </div>
+
+            <div class="readout trend-readout">
+              <div class="readout-title-row">
+                <h3>Selected trend <span id="trend-badge" class="trend-badge">stable</span></h3>
+                <div class="segmented" id="range-tabs" aria-label="Trend range">
+                  <button type="button" data-range="4w">4w</button>
+                  <button type="button" data-range="12w">12w</button>
+                </div>
+              </div>
+              <div class="metric-tabs" id="metric-tabs" aria-label="Trend metric">
+                <button type="button" data-metric="gait_speed_mps">Gait speed</button>
+                <button type="button" data-metric="sleep_efficiency_pct">Sleep efficiency</button>
+              </div>
+              <div class="trend-stats" id="trend-stats"></div>
+              <svg class="trend-chart" id="trend-chart" viewBox="0 0 460 180" role="img" aria-label="Trend chart"></svg>
+              <dl id="trend-dl"></dl>
+            </div>
+
+            <div class="readout">
+              <h3>Packet</h3>
+              <dl id="packet-dl"></dl>
+            </div>
+
+            <h3 class="strip-title">Node reporting</h3>
+            <div class="nodes-strip" id="nodes-strip"></div>
+          </div>
+        </aside>
+      </main>
+
+      <section class="cloud-strip">
+        <div class="cloud-step"><span>Ingest rate</span><b id="cloud-rate">0 msg/s</b></div>
+        <div class="cloud-step"><span>Queue depth</span><b id="cloud-queue">0 / 0</b></div>
+        <div class="cloud-step"><span>Dashboard clients</span><b id="cloud-clients">0</b></div>
+        <div class="cloud-step"><span>Processed summaries</span><b id="cloud-processed">0</b></div>
+        <div class="cloud-step"><span>Duplicates ignored</span><b id="cloud-duplicates">0</b></div>
+        <div class="cloud-step"><span>Stale ignored</span><b id="cloud-stale">0</b></div>
+      </section>
+
+      <footer class="foot">
+        Synthetic data only, no real participants. The cloud tier stores reduced
+        home summaries, never raw radar frames.
+      </footer>
+    </div>
+    <script src="app.js?v=20260702-triage"></script>
+  </body>
+</html>

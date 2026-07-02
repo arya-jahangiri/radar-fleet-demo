@@ -1,0 +1,33 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    ports:
+      - "8765:8765"
+    environment:
+      INGEST_AUTH_MODE: ${INGEST_AUTH_MODE:-hmac}
+      NODE_HMAC_SECRET: ${NODE_HMAC_SECRET:-}
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8765/api/health', timeout=2).read()"
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+
+  edge-simulator:
+    build:
+      context: .
+      dockerfile: Dockerfile.edge
+    environment:
+      BACKEND_URL: http://backend:8765
+      NODE_HMAC_SECRET: ${NODE_HMAC_SECRET:-}
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped

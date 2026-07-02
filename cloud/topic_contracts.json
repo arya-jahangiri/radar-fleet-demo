@@ -1,0 +1,52 @@
+{
+  "schema_version": "iot-topic-contracts.v1",
+  "site_namespace": "imperial-demo/sites/{site_id}",
+  "topics": [
+    {
+      "name": "raspberry pi radar-node summary",
+      "topic": "imperial-demo/sites/{site_id}/nodes/{node_id}/summary",
+      "basic_ingest_topic": "$aws/rules/{rule_name}/imperial-demo/sites/{site_id}/nodes/{node_id}/summary",
+      "direction": "edge_to_cloud",
+      "qos": 1,
+      "payload_schema": "pi-node-summary.v1",
+      "idempotency_key": "{node_id}:{boot_id}:{seq}",
+      "ordering_key": "seq",
+      "notes": "Default topology: each Raspberry Pi radar node publishes a reduced derived summary. The backend coalesces node reports into home-summary.v1 for the operator dashboard."
+    },
+    {
+      "name": "raspberry pi radar-node health",
+      "topic": "imperial-demo/sites/{site_id}/nodes/{node_id}/health",
+      "direction": "edge_to_cloud",
+      "qos": 1,
+      "payload_schema": "pi-node-health.v1",
+      "notes": "Operational health only: CPU, memory, temperature, RSSI, buffered packet count, retry/backoff state. No raw range-Doppler maps."
+    },
+    {
+      "name": "legacy home supervisor summary",
+      "topic": "imperial-demo/sites/{site_id}/supervisor/summary",
+      "basic_ingest_topic": "$aws/rules/{rule_name}/imperial-demo/sites/{site_id}/supervisor/summary",
+      "direction": "edge_to_cloud",
+      "qos": 1,
+      "payload_schema": "home-summary.v1",
+      "idempotency_key": "{site_id}:{boot_id}:{seq}",
+      "ordering_key": "seq",
+      "notes": "Supported by the local simulator for comparing the earlier gateway/Supervisor topology against the direct-node design."
+    },
+    {
+      "name": "desired configuration",
+      "topic": "$aws/things/{thing_name}/shadow/update",
+      "direction": "cloud_to_edge",
+      "qos": 1,
+      "payload_schema": "aws-iot-shadow-update.v1",
+      "notes": "AWS IoT Device Shadow equivalent of the demo desired_config endpoint."
+    },
+    {
+      "name": "dashboard snapshots",
+      "topic": "imperial-demo/sites/{site_id}/dashboard/snapshots",
+      "direction": "cloud_to_dashboard",
+      "transport": "WebSocket or SSE",
+      "payload_schema": "operator-snapshot.v1",
+      "notes": "Browser clients should not subscribe directly to device topics in a clinical deployment."
+    }
+  ]
+}
