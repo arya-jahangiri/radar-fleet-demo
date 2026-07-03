@@ -37,6 +37,7 @@ const state = {
   trendRange: "4w",
   trendMetric: "gait_speed_mps",
   reviewExpanded: false,
+  firstSnapshotSeen: false,
 };
 
 function clear(node) {
@@ -150,6 +151,7 @@ function connectHosted() {
   stopFallback();
   const snapshotUrl = snapshotOverride()?.toString() || hostedUrl("/api/snapshot");
   const streamUrl = streamOverride()?.toString() || hostedUrl("/api/stream");
+  primeFirstPaint(snapshotUrl);
   if ("EventSource" in window) {
     connectEventStream(streamUrl, snapshotUrl);
     return;
@@ -157,17 +159,36 @@ function connectHosted() {
   startSnapshotPolling(snapshotUrl);
 }
 
+// Fetch one snapshot in parallel with the stream handshake so the first paint
+// costs a single upstream round trip instead of waiting out the stream timer.
+async function primeFirstPaint(snapshotUrl) {
+  if (state.firstSnapshotSeen) return;
+  try {
+    const response = await fetch(snapshotUrl, { cache: "no-store", headers: { accept: "application/json" } });
+    if (!response.ok) return;
+    const data = await response.json();
+    if (!state.firstSnapshotSeen) {
+      onSnapshot(data);
+      setConnection("live cloud", true);
+    }
+  } catch (_) {
+    // The stream and polling paths handle sustained failures.
+  }
+}
+
 function connectEventStream(streamUrl, snapshotUrl) {
   setConnection("connecting");
   let received = false;
   const es = new EventSource(streamUrl);
   state.eventSource = es;
+  // Allow for an upstream cold start before falling back to polling; the
+  // parallel primeFirstPaint fetch keeps the page from looking idle meanwhile.
   const timeout = setTimeout(() => {
     if (!received) {
       try { es.close(); } catch (_) {}
       startSnapshotPolling(snapshotUrl);
     }
-  }, 2500);
+  }, 8000);
 
   const handleSnapshot = (ev) => {
     received = true;
@@ -222,6 +243,7 @@ function startSnapshotPolling(snapshotUrl) {
 }
 
 function onSnapshot(s) {
+  state.firstSnapshotSeen = true;
   $("clock").textContent = s.clock ? `${s.clock} UTC` : "--:--:--";
   state.homes.clear();
   for (const home of s.homes || []) state.homes.set(home.site_id, home);

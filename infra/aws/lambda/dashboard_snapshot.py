@@ -342,6 +342,10 @@ def _response(status_code: int, body: dict[str, Any]) -> dict[str, Any]:
 
 def handler(event: dict[str, Any] | None, context: Any) -> dict[str, Any]:
     event = event or {}
+    if event.get("warm"):
+        # EventBridge keep-warm ping: keeps the runtime initialised so public
+        # dashboard visitors do not pay a cold start on first load.
+        return {"statusCode": 204, "body": ""}
     if event.get("requestContext", {}).get("http", {}).get("method") == "OPTIONS":
         return _response(204, {})
 

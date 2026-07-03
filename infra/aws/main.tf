@@ -426,7 +426,7 @@ resource "aws_cloudwatch_event_rule" "cloud_simulator" {
   count = var.cloud_simulator_enabled ? 1 : 0
 
   name                = "${var.project_prefix}-cloud-simulator-every-minute"
-  description         = "Runs the optional direct-node Imperial radar demo load generator in AWS Lambda"
+  description         = "Runs the optional direct-node radar demo load generator in AWS Lambda"
   schedule_expression = "rate(1 minute)"
   state               = "ENABLED"
 }
@@ -513,6 +513,37 @@ resource "aws_lambda_function" "dashboard_snapshot" {
     aws_cloudwatch_log_group.dashboard_snapshot,
     aws_iam_role_policy.dashboard_snapshot
   ]
+}
+
+# Keep the public snapshot Lambda warm while hosted generation is on, so first
+# dashboard loads avoid a multi-second cold start. One ping per minute stays
+# far inside the Lambda free tier.
+resource "aws_cloudwatch_event_rule" "dashboard_snapshot_warmer" {
+  count = var.cloud_simulator_enabled ? 1 : 0
+
+  name                = "${var.project_prefix}-snapshot-warmer-every-minute"
+  description         = "Pings the dashboard snapshot Lambda so public loads avoid cold starts"
+  schedule_expression = "rate(1 minute)"
+  state               = "ENABLED"
+}
+
+resource "aws_cloudwatch_event_target" "dashboard_snapshot_warmer" {
+  count = var.cloud_simulator_enabled ? 1 : 0
+
+  rule      = aws_cloudwatch_event_rule.dashboard_snapshot_warmer[0].name
+  target_id = "dashboard-snapshot-warmer"
+  arn       = aws_lambda_function.dashboard_snapshot.arn
+  input     = jsonencode({ warm = true })
+}
+
+resource "aws_lambda_permission" "allow_eventbridge_snapshot_warmer" {
+  count = var.cloud_simulator_enabled ? 1 : 0
+
+  statement_id  = "AllowExecutionFromEventBridgeWarmer"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.dashboard_snapshot.function_name
+  principal     = "events.amazonaws.com"
+  source_arn    = aws_cloudwatch_event_rule.dashboard_snapshot_warmer[0].arn
 }
 
 resource "aws_lambda_function_url" "dashboard_snapshot" {

@@ -10,7 +10,7 @@
     "enabled": true
   },
   "vars": {
-    "SNAPSHOT_CACHE_SECONDS": "3",
+    "SNAPSHOT_CACHE_SECONDS": "10",
     "STREAM_INTERVAL_MS": "3000"
   }
 }
