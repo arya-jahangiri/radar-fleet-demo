@@ -523,7 +523,7 @@ async def lifespan(app: FastAPI):
                 await task
 
 
-app = FastAPI(title="Imperial Radar Fleet Cloud", version="1.0.0", lifespan=lifespan)
+app = FastAPI(title="Radar Care Fleet Cloud", version="1.0.0", lifespan=lifespan)
 # Open CORS is deliberate: this backend serves a public synthetic-data demo and
 # ingest is guarded by HMAC signatures, not by origin. A production deployment
 # would pin origins and put ingest behind device identity (see SECURITY_MODEL.md).

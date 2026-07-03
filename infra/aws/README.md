@@ -1,7 +1,7 @@
 # AWS hosted fleet
 
 This Terraform stack provisions a cost-controlled AWS IoT mapping for the
-Imperial radar demo:
+radar care fleet demo:
 
 ```text
 Raspberry Pi radar-node summaries
@@ -81,8 +81,8 @@ Default shape:
 - 1 AWS IoT Thing registry marker, kept deliberately small so the stack applies
   quickly in a fresh account.
 - The scheduled cloud load generator is disabled by default; set
-  `CLOUD_SIMULATOR_ENABLED=true` only for an AWS-side smoke test or short hosted
-  run.
+  `CLOUD_SIMULATOR_ENABLED=true` to keep the hosted fleet publishing
+  continuously. `COST_MODEL.md` quantifies the steady-state spend.
 - S3 cold copy is disabled by default; set `S3_COLD_COPY_ENABLED=true` only when
   demonstrating the audit-copy path.
 - `run_hybrid_demo.sh` publishes direct `pi-node-summary.v1` payloads from the
@@ -125,7 +125,7 @@ homes * nodes_per_home * 60 summaries/hour
 Each summary triggers one IoT rule and the Lambda hot-ingest action. If S3 cold
 copy is enabled, each summary also triggers one S3 action and one S3 object write.
 Lifecycle expiry controls storage duration, not the number of write requests.
-To cut spend during practice runs, pause or destroy the fleet when you are done:
+To stop spend entirely, pause or destroy the fleet:
 
 ```bash
 scripts/aws_demo_pause.sh --yes

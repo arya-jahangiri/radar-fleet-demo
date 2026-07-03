@@ -5,7 +5,7 @@ Data Plane HTTPS Publish request with AWS Signature Version 4 using either
 environment credentials or a static profile in ~/.aws/credentials.
 
 Example:
-    .venv/bin/python applications/imperial-iot-developer/demo/edge_simulator/aws_iot_publisher.py \
+    .venv/bin/python edge_simulator/aws_iot_publisher.py \
       --endpoint a1234567890-ats.iot.eu-west-2.amazonaws.com \
       --region eu-west-2 \
       --rule-name imperial_radar_demo_summary_ingest \

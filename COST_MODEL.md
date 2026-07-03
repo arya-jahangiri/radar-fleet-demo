@@ -62,7 +62,7 @@ Lifecycle expiry reduces how long objects remain stored, but it does not remove
 the request cost of creating those objects. When publishing frequent tiny
 summaries, per-object writes can dominate the storage cost.
 
-Keep `S3_COLD_COPY_ENABLED=false` for a multi-day hosted demo. Turn it on only
+Keep `S3_COLD_COPY_ENABLED=false` for continuous hosted operation. Turn it on
 when showing the cold-audit-copy architecture explicitly:
 
 ```bash
@@ -77,29 +77,45 @@ emits Server-Sent Events at a default display cadence of 3 seconds:
 
 ```text
 CLOUDFLARE_STREAM_INTERVAL_MS=3000
-CLOUDFLARE_SNAPSHOT_CACHE_SECONDS=3
+CLOUDFLARE_SNAPSHOT_CACHE_SECONDS=10
 ```
 
 Increasing the display cadence mostly increases dashboard read traffic. The
 larger spend lever is still how often AWS generates and writes node summaries
 into DynamoDB.
 
-## Recommended Few-Day Demo Setting
+## Continuous Hosted Operation
 
-For a few days of hosted activity, prefer:
+The hosted path is designed to run continuously, not just for short demo
+windows. Costs scale linearly with publish rate, so the steady state is easy
+to reason about. At the default rate of `500` node summaries per minute:
+
+```text
+500/min ≈ 720,000 summaries/day ≈ 21.6M summaries/month
+```
+
+Each summary drives one IoT rule execution, one Lambda invocation, and one
+DynamoDB write. The dominant steady-state cost is DynamoDB on-demand write
+units; Lambda request and compute charges are single-digit pounds per month at
+this rate, and IoT Basic Ingest avoids per-message broker charges entirely.
+The whole slice lands in the tens of pounds per month, with no always-on
+compute and nothing that accumulates: DynamoDB TTL keeps the table at one row
+per node, and CloudWatch log retention is capped at 3 days.
+
+The live public deployment runs with:
 
 ```text
 HOSTED_HOMES=100
 CLOUD_SIMULATOR_ENABLED=true
 CLOUD_SIMULATOR_HOME_COUNT=100
 CLOUDFLARE_STREAM_INTERVAL_MS=3000
-CLOUDFLARE_SNAPSHOT_CACHE_SECONDS=3
+CLOUDFLARE_SNAPSHOT_CACHE_SECONDS=10
 S3_COLD_COPY_ENABLED=false
 S3_RETENTION_DAYS=1
 LATEST_STATE_TTL_SECONDS=86400
 ```
 
-That keeps data flowing in AWS even when every laptop is off. The public
+That keeps data flowing in AWS indefinitely with every laptop off. The public
 dashboard can be deployed with:
 
 ```bash

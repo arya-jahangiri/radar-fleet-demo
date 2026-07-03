@@ -6,7 +6,7 @@ coalesces nodes into one home-level dashboard contract. The older per-home
 Supervisor summary topology is still available with `--topology home-summary`.
 
 Run (from repo root), e.g. 100 homes:
-    .venv/bin/python applications/imperial-iot-developer/demo/edge_simulator/simulator.py \
+    .venv/bin/python edge_simulator/simulator.py \
         --homes 100 --backend-url http://127.0.0.1:8765
 """
 
